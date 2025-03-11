@@ -1,101 +1,186 @@
-import Image from "next/image";
+"use client";
 
-export default function Home() {
-  return (
-    <div className="grid grid-rows-[20px_1fr_20px] items-center justify-items-center min-h-screen p-8 pb-20 gap-16 sm:p-20 font-[family-name:var(--font-geist-sans)]">
-      <main className="flex flex-col gap-8 row-start-2 items-center sm:items-start">
-        <Image
-          className="dark:invert"
-          src="/next.svg"
-          alt="Next.js logo"
-          width={180}
-          height={38}
-          priority
-        />
-        <ol className="list-inside list-decimal text-sm text-center sm:text-left font-[family-name:var(--font-geist-mono)]">
-          <li className="mb-2">
-            Get started by editing{" "}
-            <code className="bg-black/[.05] dark:bg-white/[.06] px-1 py-0.5 rounded font-semibold">
-              app/page.tsx
-            </code>
-            .
-          </li>
-          <li>Save and see your changes instantly.</li>
-        </ol>
+import { useState } from "react";
+import TodoList from "./components/TodoList";
+import TodoForm from "./components/TodoForm";
+import {
+    Button,
+    Typography,
+    Dialog,
+    DialogActions,
+    DialogContent,
+    DialogTitle,
+    Box,
+} from "@mui/material";
+import { Todo } from "./types/todo";
 
-        <div className="flex gap-4 items-center flex-col sm:flex-row">
-          <a
-            className="rounded-full border border-solid border-transparent transition-colors flex items-center justify-center bg-foreground text-background gap-2 hover:bg-[#383838] dark:hover:bg-[#ccc] text-sm sm:text-base h-10 sm:h-12 px-4 sm:px-5"
-            href="https://vercel.com/new?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            <Image
-              className="dark:invert"
-              src="/vercel.svg"
-              alt="Vercel logomark"
-              width={20}
-              height={20}
+export default function TodoPage() {
+    const [todos, setTodos] = useState<Todo[]>([]);
+    const [filter, setFilter] = useState("all");
+    const [todoToEdit, setTodoToEdit] = useState<Todo | null>(null);
+    const [openDialog, setOpenDialog] = useState(false);
+    const [selectedTodos, setSelectedTodos] = useState<number[]>([]);
+    const [openConfirmDialog, setOpenConfirmDialog] = useState(false);
+    const [deletingTodoIds, setDeletingTodoIds] = useState<number[]>([]);
+
+    const handleAddTodo = (todo: Todo) => {
+        setTodos([...todos, todo]);
+        setOpenDialog(false);
+    };
+
+    const handleEditTodo = (id: number, updatedTodo: Todo) => {
+        setTodos(todos.map((todo) => (todo.id === id ? updatedTodo : todo)));
+        setTodoToEdit(null);
+        setOpenDialog(false);
+    };
+
+    const handleDeleteTodo = (id: number) => {
+        setDeletingTodoIds([id]);
+        setOpenConfirmDialog(true);
+    };
+
+    const handleBulkDelete = () => {
+        setDeletingTodoIds(selectedTodos);
+        setOpenConfirmDialog(true);
+    };
+
+    const confirmDelete = () => {
+        setTodos(todos.filter((todo) => !deletingTodoIds.includes(todo.id)));
+        setSelectedTodos([]);
+        setOpenConfirmDialog(false);
+    };
+
+    const cancelDelete = () => {
+        setOpenConfirmDialog(false);
+    };
+
+    const filteredTodos = todos.filter((todo) => {
+        if (filter === "all") return true;
+        if (filter === "pending") return !todo.completed;
+        if (filter === "completed") return todo.completed;
+        return true;
+    });
+
+    const handleOpenAddTodo = () => {
+        setTodoToEdit(null);
+        setOpenDialog(true);
+    };
+
+    return (
+        <Box sx={{ maxWidth: "lg", mx: "auto", p: 6 }}>
+            <Typography variant="h3" align="center" sx={{ fontWeight: 700 }}>
+                To Do List
+            </Typography>
+
+            <Box
+                sx={{
+                    display: "flex",
+                    gap: 2,
+                    mb: 4,
+                    justifyContent: "center",
+                }}
+            >
+                <Button
+                    variant="contained"
+                    color="primary"
+                    onClick={handleOpenAddTodo}
+                >
+                    New Todo Item
+                </Button>
+                <Button
+                    variant="contained"
+                    color="error"
+                    onClick={handleBulkDelete}
+                    disabled={selectedTodos.length === 0}
+                >
+                    Delete
+                </Button>
+            </Box>
+
+            <TodoForm
+                onAddTodo={handleAddTodo}
+                onEditTodo={handleEditTodo}
+                todoToEdit={todoToEdit}
+                open={openDialog}
+                setOpen={setOpenDialog}
             />
-            Deploy now
-          </a>
-          <a
-            className="rounded-full border border-solid border-black/[.08] dark:border-white/[.145] transition-colors flex items-center justify-center hover:bg-[#f2f2f2] dark:hover:bg-[#1a1a1a] hover:border-transparent text-sm sm:text-base h-10 sm:h-12 px-4 sm:px-5 sm:min-w-44"
-            href="https://nextjs.org/docs?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            Read our docs
-          </a>
-        </div>
-      </main>
-      <footer className="row-start-3 flex gap-6 flex-wrap items-center justify-center">
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://nextjs.org/learn?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="/file.svg"
-            alt="File icon"
-            width={16}
-            height={16}
-          />
-          Learn
-        </a>
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://vercel.com/templates?framework=next.js&utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="/window.svg"
-            alt="Window icon"
-            width={16}
-            height={16}
-          />
-          Examples
-        </a>
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://nextjs.org?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="/globe.svg"
-            alt="Globe icon"
-            width={16}
-            height={16}
-          />
-          Go to nextjs.org →
-        </a>
-      </footer>
-    </div>
-  );
+
+            <Box
+                sx={{
+                    display: "flex",
+                    gap: 1,
+                    mb: 1,
+                }}
+            >
+                {["all", "pending", "completed"].map((filterOption) => (
+                    <Button
+                        key={filterOption}
+                        onClick={() => setFilter(filterOption)}
+                        variant="contained"
+                        color={
+                            filter === filterOption ? "primary" : "secondary"
+                        }
+                    >
+                        {filterOption.charAt(0).toUpperCase() +
+                            filterOption.slice(1)}
+                    </Button>
+                ))}
+            </Box>
+
+            <Box
+                sx={{
+                    border: "1px solid #ddd",
+                    borderRadius: 1,
+                    p: 2,
+                    display: "flex",
+                    flexDirection: "column",
+                    justifyContent: "center",
+                }}
+            >
+                {filteredTodos.length === 0 ? (
+                    <Typography
+                        variant="h4"
+                        align="center"
+                        sx={{ color: "gray" }}
+                    >
+                        No Todo Item
+                    </Typography>
+                ) : (
+                    <TodoList
+                        todos={filteredTodos}
+                        onDeleteTodo={handleDeleteTodo}
+                        onEditTodo={(todo) => {
+                            setTodoToEdit(todo);
+                            setOpenDialog(true);
+                        }}
+                        selectedTodos={selectedTodos}
+                        onSelectTodo={(id) => {
+                            setSelectedTodos((prev) =>
+                                prev.includes(id)
+                                    ? prev.filter((todoId) => todoId !== id)
+                                    : [...prev, id]
+                            );
+                        }}
+                    />
+                )}
+            </Box>
+
+            <Dialog open={openConfirmDialog} onClose={cancelDelete}>
+                <DialogTitle>Confirm Deletion</DialogTitle>
+                <DialogContent>
+                    <Typography>
+                        Are you sure you want to delete the selected todo items?
+                    </Typography>
+                </DialogContent>
+                <DialogActions>
+                    <Button onClick={cancelDelete} color="primary">
+                        Cancel
+                    </Button>
+                    <Button onClick={confirmDelete} color="secondary">
+                        Confirm
+                    </Button>
+                </DialogActions>
+            </Dialog>
+        </Box>
+    );
 }
